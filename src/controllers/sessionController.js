@@ -13,7 +13,7 @@ class SessionController {
       id: user._id.toString(),
       email: user.email,
       role: user.role,
-      cart: user.cart._id,
+      cart: user.cart ? user.cart._id : null,
     };
     res.send({ status: "successful login", user });
   };

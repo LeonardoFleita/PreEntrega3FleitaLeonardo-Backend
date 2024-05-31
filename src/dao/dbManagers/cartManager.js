@@ -1,7 +1,5 @@
 const CartModel = require(`../models/cart.model`);
 const ProductModel = require("../models/product.model");
-const TicketModel = require("../models/ticket.model");
-const moment = require("moment-timezone");
 
 class CartManager {
   constructor() {}
@@ -170,74 +168,6 @@ class CartManager {
         { arrayFilters: [{ "elem.product": productId }], new: true }
       );
       return updated;
-    } catch (err) {
-      throw Error(err.message);
-    }
-  };
-
-  //Finaliza la compra
-
-  purchase = async (cartId, userEmail, productManager) => {
-    try {
-      const cart = await this.getCartByIdPopulate(cartId);
-      const products = cart[0].products;
-
-      const productsInStock = products.filter(
-        (p) => p.quantity <= p.product.stock
-      );
-      const productsOutOfStock = products.filter(
-        (p) => p.quantity > p.product.stock
-      );
-
-      if (productsInStock.length === 0) {
-        throw new Error("Selected products are out of stock");
-      }
-
-      const totalPrice = (products) => {
-        return products.reduce((total, p) => {
-          return total + p.product.price * p.quantity;
-        }, 0);
-      };
-      const amount = totalPrice(productsInStock);
-
-      const date = () => {
-        const dateAndHour = moment.tz("America/Argentina").format();
-        return dateAndHour;
-      };
-      let purchase_datetime = date();
-
-      const newStock = productsInStock.map((p) => {
-        return { id: p.product._id, stock: p.product.stock - p.quantity };
-      });
-      newStock.map(async (p) => {
-        await productManager.updateProduct(p);
-      });
-
-      const tickets = await TicketModel.find();
-      let code = tickets.length + 1;
-
-      if (productsOutOfStock.length === 0) {
-        await this.cleanCart(cartId);
-        return {
-          ticket: await TicketModel.create({
-            code,
-            purchase_datetime,
-            amount,
-            purchaser: userEmail,
-          }),
-        };
-      } else {
-        await this.updateProductsFromCart(cartId, productsOutOfStock);
-        return {
-          ticket: await TicketModel.create({
-            code,
-            purchase_datetime,
-            amount,
-            purchaser: userEmail,
-          }),
-          sinComprar: productsOutOfStock,
-        };
-      }
     } catch (err) {
       throw Error(err.message);
     }
