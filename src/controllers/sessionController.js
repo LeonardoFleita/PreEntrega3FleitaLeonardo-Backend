@@ -15,7 +15,8 @@ class SessionController {
       role: user.role,
       cart: user.cart ? user.cart._id : null,
     };
-    res.send({ status: "successful login", user });
+    const userSession = req.session.user;
+    res.send({ status: "successful login", userSession });
   };
 
   logout = async (req, res) => {
